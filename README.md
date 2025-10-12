@@ -31,7 +31,7 @@ jalanrusak-be/
   - services/           # Business use cases implementing `usecases` ports
   - ports/              # Interfaces/ports
     - usecases/         # Interface to define how the outside world drives the application
-    - external          # Interface to define how the core calls external services
+    - external/         # Interface to define how the core calls external services
   - domain/             # Domain layer
     - entities/         # Domain entities
     - errors/           # Domain errors

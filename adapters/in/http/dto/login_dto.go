@@ -29,6 +29,11 @@ type RefreshTokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"` // in seconds
 }
 
+// LogoutRequest represents the optional logout payload
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 // UserInfo represents user information in responses
 type UserInfo struct {
 	ID        string     `json:"id"`

@@ -3,43 +3,35 @@
 SYNC IMPACT REPORT - Constitution Update
 ================================================================================
 
-Version Change: 1.0.0 → 1.1.0
+Version Change: 1.1.0 → 1.2.0
 
 Amendment Summary:
-- Modified Principle V: Test-Driven Quality → changed from mandatory to deferred
-- Testing is now optional for initial implementation, can be added later
-- Focus shifted to working implementation first, test coverage as enhancement
+- Added mandatory Swagger/OpenAPI annotations for every HTTP endpoint
+- Required ongoing synchronization between handlers and generated API docs
 
 Modified Principles:
-- Principle V: "Test-Driven Quality" → "Quality Through Testing (Deferred)"
-  * Changed from mandatory requirement to optional/deferred approach
-  * Tests no longer block feature implementation
-  * Coverage targets removed (was >80% core coverage)
-  * Testing framework (testify) retained for future use
+- Principle IV: "API Design Excellence" now mandates Swagger annotations
 
 Sections Modified:
-✅ Core Principles - Principle V rewritten to reflect deferred testing policy
-✅ Code Review Checklist - Removed mandatory test requirements
-✅ Non-Negotiable Constraints - Removed test-related MUST requirements
+✅ Core Principles - API Design Excellence enhanced with annotation requirements
+✅ Development Workflow - Documentation step includes Swagger regeneration
+✅ Code Review Checklist - New item for Swagger coverage and freshness
+✅ Non-Negotiable Constraints - Swagger documentation accuracy mandated
 
 Template Consistency Updates Required:
-⚠ plan-template.md - Constitution Check section needs update (Principle V changed)
-⚠ spec-template.md - User story testing sections can be optional now
-⚠ tasks-template.md - Test task categorization should reflect deferred status
-✅ .github/copilot-instructions.md - Already updated with Testing Policy
+⚠ spec-template.md - Ensure API sections reference Swagger annotations
+⚠ tasks-template.md - Include tasks for Swagger regeneration when endpoints change
 
 Deferred Items: None
 
 Version Bump Rationale:
-- MINOR: 1.0.0 → 1.1.0
-- Material change to existing principle (testing methodology)
-- Not backward incompatible (existing tests still valid, just not required)
-- Expands flexibility without removing capabilities
+- MINOR: 1.1.0 → 1.2.0
+- Adds enforceable documentation requirements without breaking compatibility
 
 Suggested Commit Message:
-docs: amend constitution to v1.1.0 (defer testing requirements for initial implementation)
+docs: enforce swagger annotations for all endpoints
 
-Date: October 12, 2025
+Date: October 19, 2025
 
 ================================================================================
 -->
@@ -103,6 +95,7 @@ RESTful API conventions MUST be followed consistently.
 - Pagination for list endpoints
 - Comprehensive error messages with actionable details
 - API versioning when breaking changes required (`/api/v1/`, `/api/v2/`)
+- Every HTTP handler MUST include up-to-date Swagger annotations describing request/response payloads, status codes, and security; generated OpenAPI docs must match the implemented behavior before merge
 
 **Rationale**: Predictable API behavior improves developer experience and reduces integration errors.
 
@@ -186,6 +179,7 @@ These technologies are **mandated** for consistency:
 
 5. **Documentation**:
    - Update API documentation
+   - Regenerate Swagger docs and verify the output reflects current handlers
    - Add godoc comments for public interfaces
    - Update README if needed
 
@@ -203,6 +197,7 @@ Every pull request MUST verify:
 - [ ] No hardcoded secrets or configuration
 - [ ] Code follows Go conventions (gofmt, golint)
 - [ ] API endpoints follow RESTful conventions
+- [ ] Swagger annotations cover every exposed endpoint and generated docs are refreshed
 - [ ] Database migrations included for schema changes
 - [ ] Godoc comments on public functions/types
 - [ ] No SQL injection vulnerabilities (parameterized queries only)
@@ -220,6 +215,7 @@ Every pull request MUST verify:
 - ✅ Parameterized database queries
 - ✅ Environment-based configuration
 - ✅ RESTful API design
+- ✅ Swagger annotations kept current for all HTTP endpoints and docs regenerated during changes
 
 **MUST NOT Have**:
 - ❌ Business logic in HTTP handlers
@@ -252,7 +248,7 @@ This constitution **supersedes all other development practices**. All contributo
 
 ### Version Information
 
-**Version**: 1.1.0 | **Ratified**: 2025-10-12 | **Last Amended**: 2025-10-12
+**Version**: 1.2.0 | **Ratified**: 2025-10-19 | **Last Amended**: 2025-10-19
 
 ---
 

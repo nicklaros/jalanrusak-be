@@ -22,6 +22,16 @@ func NewPasswordHandler(passwordService usecases.PasswordService) *PasswordHandl
 }
 
 // RequestPasswordReset handles POST /api/auth/password/reset-request
+// @Summary Request password reset email
+// @Description Initiate password reset flow for the given email address.
+// @Tags Password
+// @Accept json
+// @Produce json
+// @Param request body dto.PasswordResetRequestRequest true "Password reset request payload"
+// @Success 200 {object} dto.PasswordResetRequestResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/password/reset-request [post]
 func (h *PasswordHandler) RequestPasswordReset(c *gin.Context) {
 	var req dto.PasswordResetRequestRequest
 
@@ -55,6 +65,17 @@ func (h *PasswordHandler) RequestPasswordReset(c *gin.Context) {
 }
 
 // ResetPassword handles POST /api/auth/password/reset-confirm
+// @Summary Confirm password reset
+// @Description Reset password using a valid reset token.
+// @Tags Password
+// @Accept json
+// @Produce json
+// @Param request body dto.PasswordResetConfirmRequest true "Password reset confirmation payload"
+// @Success 200 {object} dto.PasswordResetConfirmResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/password/reset-confirm [post]
 func (h *PasswordHandler) ResetPassword(c *gin.Context) {
 	var req dto.PasswordResetConfirmRequest
 
@@ -111,6 +132,19 @@ func (h *PasswordHandler) ResetPassword(c *gin.Context) {
 }
 
 // ChangePassword handles POST /api/auth/password/change (requires authentication)
+// @Summary Change password
+// @Description Change the authenticated user's password.
+// @Tags Password
+// @Accept json
+// @Produce json
+// @Param request body dto.PasswordChangeRequest true "Change password payload"
+// @Success 200 {object} dto.PasswordChangeResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Security BearerAuth
+// @Router /auth/password/change [post]
 func (h *PasswordHandler) ChangePassword(c *gin.Context) {
 	var req dto.PasswordChangeRequest
 

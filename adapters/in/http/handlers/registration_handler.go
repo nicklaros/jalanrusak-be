@@ -22,6 +22,17 @@ func NewRegistrationHandler(userService usecases.UserService) *RegistrationHandl
 }
 
 // Register handles POST /api/auth/register
+// @Summary Register a new user
+// @Description Create a new user with name, email, and password.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegistrationRequest true "Registration payload"
+// @Success 201 {object} dto.RegistrationResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 409 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/register [post]
 func (h *RegistrationHandler) Register(c *gin.Context) {
 	var req dto.RegistrationRequest
 

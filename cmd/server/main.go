@@ -15,8 +15,18 @@ import (
 	"github.com/nicklaros/jalanrusak-be/config"
 	"github.com/nicklaros/jalanrusak-be/core/ports/external"
 	"github.com/nicklaros/jalanrusak-be/core/services"
+	docs "github.com/nicklaros/jalanrusak-be/docs"
 )
 
+// @title Jalanrusak API
+// @version 1.0
+// @description API documentation for the Jalanrusak backend service.
+// @Schemes http
+// @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and the JWT token.
 func main() {
 	// Load configuration
 	cfg, err := config.Load()
@@ -83,6 +93,10 @@ func main() {
 
 	// Setup Gin router
 	router := gin.Default()
+
+	docs.SwaggerInfo.BasePath = "/api"
+	docs.SwaggerInfo.Host = fmt.Sprintf("localhost:%s", cfg.Server.Port)
+	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	// Configure routes
 	routes.SetupRoutes(router, registrationHandler, authHandler, passwordHandler, authService)

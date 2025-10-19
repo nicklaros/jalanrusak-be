@@ -26,6 +26,17 @@ func NewAuthHandler(authService usecases.AuthService, userService usecases.UserS
 }
 
 // Login handles POST /api/auth/login
+// @Summary Authenticate user credentials
+// @Description Login with email and password to receive access and refresh tokens.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "Login payload"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 
@@ -89,6 +100,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 // RefreshToken handles POST /api/auth/refresh
+// @Summary Refresh access token
+// @Description Exchange a valid refresh token for a new access token.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RefreshTokenRequest true "Refresh token payload"
+// @Success 200 {object} dto.RefreshTokenResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 
@@ -138,6 +160,17 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 }
 
 // Logout handles POST /api/auth/logout
+// @Summary Logout and revoke tokens
+// @Description Revoke the active session and optional refresh token.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LogoutRequest false "Optional refresh token to revoke"
+// @Success 200 {object} map[string]string
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Security BearerAuth
+// @Router /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID, exists := c.Get("userID")
@@ -150,9 +183,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	}
 
 	// Get refresh token from request body (optional)
-	var req struct {
-		RefreshToken string `json:"refresh_token"`
-	}
+	var req dto.LogoutRequest
 	_ = c.ShouldBindJSON(&req)
 
 	// Call auth service to revoke token(s)

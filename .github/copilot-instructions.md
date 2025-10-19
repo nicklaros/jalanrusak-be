@@ -32,3 +32,7 @@ Go 1.21+: Follow standard conventions
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
+
+## Constitution
+
+refer to [../.specify/memory/constitution.md](../.specify/memory/constitution.md)

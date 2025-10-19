@@ -5,6 +5,8 @@ import (
 	"github.com/nicklaros/jalanrusak-be/adapters/in/http/handlers"
 	"github.com/nicklaros/jalanrusak-be/adapters/in/http/middleware"
 	"github.com/nicklaros/jalanrusak-be/core/ports/usecases"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // SetupRoutes configures all HTTP routes
@@ -15,6 +17,8 @@ func SetupRoutes(
 	passwordHandler *handlers.PasswordHandler,
 	authService usecases.AuthService,
 ) {
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// API v1 routes
 	api := router.Group("/api")
 	{

@@ -21,7 +21,7 @@ func NewPasswordHandler(passwordService usecases.PasswordService) *PasswordHandl
 	}
 }
 
-// RequestPasswordReset handles POST /api/auth/password/reset-request
+// RequestPasswordReset handles POST /api/v1/auth/password/reset-request
 // @Summary Request password reset email
 // @Description Initiate password reset flow for the given email address.
 // @Tags Password
@@ -64,7 +64,7 @@ func (h *PasswordHandler) RequestPasswordReset(c *gin.Context) {
 	})
 }
 
-// ResetPassword handles POST /api/auth/password/reset-confirm
+// ResetPassword handles POST /api/v1/auth/password/reset-confirm
 // @Summary Confirm password reset
 // @Description Reset password using a valid reset token.
 // @Tags Password
@@ -131,7 +131,7 @@ func (h *PasswordHandler) ResetPassword(c *gin.Context) {
 	})
 }
 
-// ChangePassword handles POST /api/auth/password/change (requires authentication)
+// ChangePassword handles POST /api/v1/auth/password/change (requires authentication)
 // @Summary Change password
 // @Description Change the authenticated user's password.
 // @Tags Password

@@ -20,10 +20,10 @@ func SetupRoutes(
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// API v1 routes
-	api := router.Group("/api")
+	apiV1 := router.Group("/api/v1")
 	{
 		// Auth routes (public)
-		auth := api.Group("/auth")
+		auth := apiV1.Group("/auth")
 		{
 			auth.POST("/register", registrationHandler.Register)
 			auth.POST("/login", authHandler.Login)
@@ -35,7 +35,7 @@ func SetupRoutes(
 		}
 
 		// Protected routes (require authentication)
-		protected := api.Group("")
+		protected := apiV1.Group("")
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
 			protected.POST("/auth/logout", authHandler.Logout)

@@ -9,7 +9,7 @@
 ###############################################################################
 
 ### Register a new user
-POST {{baseUrl}}/api/auth/register
+POST {{baseUrl}}/api/v1/auth/register
 content-type: application/json
 
 {
@@ -19,7 +19,7 @@ content-type: application/json
 }
 
 ### Register - Test duplicate email (should return 409 Conflict)
-POST {{baseUrl}}/api/auth/register
+POST {{baseUrl}}/api/v1/auth/register
 content-type: application/json
 
 {
@@ -29,7 +29,7 @@ content-type: application/json
 }
 
 ### Register - Test weak password (should return 400)
-POST {{baseUrl}}/api/auth/register
+POST {{baseUrl}}/api/v1/auth/register
 content-type: application/json
 
 {
@@ -43,7 +43,7 @@ content-type: application/json
 ###############################################################################
 
 ### Login with valid credentials
-POST {{baseUrl}}/api/auth/login
+POST {{baseUrl}}/api/v1/auth/login
 content-type: application/json
 
 {
@@ -52,7 +52,7 @@ content-type: application/json
 }
 
 ### Login - Invalid credentials (should return 401)
-POST {{baseUrl}}/api/auth/login
+POST {{baseUrl}}/api/v1/auth/login
 content-type: application/json
 
 {
@@ -65,7 +65,7 @@ content-type: application/json
 ###############################################################################
 
 ### Refresh access token
-POST {{baseUrl}}/api/auth/refresh
+POST {{baseUrl}}/api/v1/auth/refresh
 content-type: application/json
 
 {
@@ -73,7 +73,7 @@ content-type: application/json
 }
 
 ### Refresh - Invalid token (should return 401)
-POST {{baseUrl}}/api/auth/refresh
+POST {{baseUrl}}/api/v1/auth/refresh
 content-type: application/json
 
 {
@@ -85,7 +85,7 @@ content-type: application/json
 ###############################################################################
 
 ### Logout (revoke specific refresh token)
-POST {{baseUrl}}/api/auth/logout
+POST {{baseUrl}}/api/v1/auth/logout
 Authorization: Bearer {{accessToken}}
 content-type: application/json
 
@@ -94,7 +94,7 @@ content-type: application/json
 }
 
 ### Logout - Revoke all tokens (no refresh_token in body)
-POST {{baseUrl}}/api/auth/logout
+POST {{baseUrl}}/api/v1/auth/logout
 Authorization: Bearer {{accessToken}}
 content-type: application/json
 
@@ -105,7 +105,7 @@ content-type: application/json
 ###############################################################################
 
 ### Request password reset (check console for token!)
-POST {{baseUrl}}/api/auth/password/reset-request
+POST {{baseUrl}}/api/v1/auth/password/reset-request
 content-type: application/json
 
 {
@@ -113,7 +113,7 @@ content-type: application/json
 }
 
 ### Request reset - Non-existent email (still returns success for security)
-POST {{baseUrl}}/api/auth/password/reset-request
+POST {{baseUrl}}/api/v1/auth/password/reset-request
 content-type: application/json
 
 {
@@ -126,7 +126,7 @@ content-type: application/json
 
 ### Reset password using token from console
 # IMPORTANT: Copy the token from server console output after requesting reset
-POST {{baseUrl}}/api/auth/password/reset-confirm
+POST {{baseUrl}}/api/v1/auth/password/reset-confirm
 content-type: application/json
 
 {
@@ -135,7 +135,7 @@ content-type: application/json
 }
 
 ### Reset - Invalid token (should return 400)
-POST {{baseUrl}}/api/auth/password/reset-confirm
+POST {{baseUrl}}/api/v1/auth/password/reset-confirm
 content-type: application/json
 
 {
@@ -144,7 +144,7 @@ content-type: application/json
 }
 
 ### Reset - Weak password (should return 400)
-POST {{baseUrl}}/api/auth/password/reset-confirm
+POST {{baseUrl}}/api/v1/auth/password/reset-confirm
 content-type: application/json
 
 {
@@ -157,7 +157,7 @@ content-type: application/json
 ###############################################################################
 
 ### Change password (authenticated user)
-POST {{baseUrl}}/api/auth/password/change
+POST {{baseUrl}}/api/v1/auth/password/change
 Authorization: Bearer {{accessToken}}
 content-type: application/json
 
@@ -167,7 +167,7 @@ content-type: application/json
 }
 
 ### Change - Wrong current password (should return 401)
-POST {{baseUrl}}/api/auth/password/change
+POST {{baseUrl}}/api/v1/auth/password/change
 Authorization: Bearer {{accessToken}}
 content-type: application/json
 
@@ -177,7 +177,7 @@ content-type: application/json
 }
 
 ### Change - Weak new password (should return 400)
-POST {{baseUrl}}/api/auth/password/change
+POST {{baseUrl}}/api/v1/auth/password/change
 Authorization: Bearer {{accessToken}}
 content-type: application/json
 
@@ -191,7 +191,7 @@ content-type: application/json
 ###############################################################################
 
 ### Step 1: Register new test user
-POST {{baseUrl}}/api/auth/register
+POST {{baseUrl}}/api/v1/auth/register
 content-type: application/json
 
 {
@@ -203,7 +203,7 @@ content-type: application/json
 ###
 
 ### Step 2: Login to get tokens
-POST {{baseUrl}}/api/auth/login
+POST {{baseUrl}}/api/v1/auth/login
 content-type: application/json
 
 {
@@ -216,7 +216,7 @@ content-type: application/json
 ###
 
 ### Step 3: Change password (update Authorization header with your token)
-POST {{baseUrl}}/api/auth/password/change
+POST {{baseUrl}}/api/v1/auth/password/change
 Authorization: Bearer your_access_token_from_step2
 content-type: application/json
 
@@ -228,7 +228,7 @@ content-type: application/json
 ###
 
 ### Step 4: Refresh token
-POST {{baseUrl}}/api/auth/refresh
+POST {{baseUrl}}/api/v1/auth/refresh
 content-type: application/json
 
 {
@@ -238,7 +238,7 @@ content-type: application/json
 ###
 
 ### Step 5: Logout
-POST {{baseUrl}}/api/auth/logout
+POST {{baseUrl}}/api/v1/auth/logout
 Authorization: Bearer your_access_token
 content-type: application/json
 
@@ -249,7 +249,7 @@ content-type: application/json
 ###
 
 ### Step 6: Try refresh after logout (should fail with 401)
-POST {{baseUrl}}/api/auth/refresh
+POST {{baseUrl}}/api/v1/auth/refresh
 content-type: application/json
 
 {
@@ -261,7 +261,7 @@ content-type: application/json
 ###############################################################################
 
 ### Step 1: Request password reset
-POST {{baseUrl}}/api/auth/password/reset-request
+POST {{baseUrl}}/api/v1/auth/password/reset-request
 content-type: application/json
 
 {
@@ -276,7 +276,7 @@ content-type: application/json
 ###
 
 ### Step 3: Use reset token to set new password
-POST {{baseUrl}}/api/auth/password/reset-confirm
+POST {{baseUrl}}/api/v1/auth/password/reset-confirm
 content-type: application/json
 
 {
@@ -287,7 +287,7 @@ content-type: application/json
 ###
 
 ### Step 4: Login with new password
-POST {{baseUrl}}/api/auth/login
+POST {{baseUrl}}/api/v1/auth/login
 content-type: application/json
 
 {

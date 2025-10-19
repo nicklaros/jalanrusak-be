@@ -25,7 +25,7 @@ func NewAuthHandler(authService usecases.AuthService, userService usecases.UserS
 	}
 }
 
-// Login handles POST /api/auth/login
+// Login handles POST /api/v1/auth/login
 // @Summary Authenticate user credentials
 // @Description Login with email and password to receive access and refresh tokens.
 // @Tags Auth
@@ -99,7 +99,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
-// RefreshToken handles POST /api/auth/refresh
+// RefreshToken handles POST /api/v1/auth/refresh
 // @Summary Refresh access token
 // @Description Exchange a valid refresh token for a new access token.
 // @Tags Auth
@@ -159,7 +159,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	})
 }
 
-// Logout handles POST /api/auth/logout
+// Logout handles POST /api/v1/auth/logout
 // @Summary Logout and revoke tokens
 // @Description Revoke the active session and optional refresh token.
 // @Tags Auth

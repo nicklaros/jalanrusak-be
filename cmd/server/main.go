@@ -22,7 +22,7 @@ import (
 // @version 1.0
 // @description API documentation for the Jalanrusak backend service.
 // @Schemes http
-// @BasePath /api
+// @BasePath /api/v1
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
@@ -94,7 +94,7 @@ func main() {
 	// Setup Gin router
 	router := gin.Default()
 
-	docs.SwaggerInfo.BasePath = "/api"
+	docs.SwaggerInfo.BasePath = "/api/v1"
 	docs.SwaggerInfo.Host = fmt.Sprintf("localhost:%s", cfg.Server.Port)
 	docs.SwaggerInfo.Schemes = []string{"http"}
 

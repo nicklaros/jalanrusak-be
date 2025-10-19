@@ -21,7 +21,7 @@ func NewRegistrationHandler(userService usecases.UserService) *RegistrationHandl
 	}
 }
 
-// Register handles POST /api/auth/register
+// Register handles POST /api/v1/auth/register
 // @Summary Register a new user
 // @Description Create a new user with name, email, and password.
 // @Tags Auth

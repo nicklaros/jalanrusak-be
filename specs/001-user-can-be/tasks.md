@@ -97,7 +97,7 @@ This feature implements user authentication following **hexagonal architecture**
 
 - [X] **T029** [US1] Create RegisterRequest and RegisterResponse DTOs in `adapters/in/http/dto/registration_dto.go`
 - [X] **T030** [US1] Implement registration handler in `adapters/in/http/handlers/registration_handler.go` (POST /auth/register: parse RegisterRequest, call UserService.Register, return 201 with user data or 400 with validation errors)
-- [X] **T031** [US1] Add registration route in `adapters/in/http/routes/routes.go` (POST /api/auth/register → registrationHandler.Register)
+- [X] **T031** [US1] Add registration route in `adapters/in/http/routes/routes.go` (POST /api/v1/auth/register → registrationHandler.Register)
 - [X] **T032** [US1] Create main server entry point in `cmd/server/main.go` (wire all dependencies, start Gin server)
 
 **Story Checkpoint**: ✅ US1 Complete - Users can register and accounts are created in database

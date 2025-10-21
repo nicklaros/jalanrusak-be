@@ -19,7 +19,15 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	URL string
+	Host            string
+	Port            int
+	User            string
+	Password        string
+	DBName          string
+	SSLMode         string
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
 }
 
 type JWTConfig struct {
@@ -45,6 +53,11 @@ func Load() (*Config, error) {
 	viper.SetDefault("ACCESS_TOKEN_TTL_HOURS", 24)
 	viper.SetDefault("REFRESH_TOKEN_TTL_DAYS", 30)
 	viper.SetDefault("EMAIL_SERVICE_TYPE", "console")
+	viper.SetDefault("DB_PORT", 5432)
+	viper.SetDefault("DB_SSL_MODE", "disable")
+	viper.SetDefault("DB_MAX_OPEN_CONNS", 25)
+	viper.SetDefault("DB_MAX_IDLE_CONNS", 5)
+	viper.SetDefault("DB_CONN_MAX_LIFETIME_MINUTES", 5)
 
 	// Read config file if it exists
 	if err := viper.ReadInConfig(); err != nil {
@@ -59,7 +72,15 @@ func Load() (*Config, error) {
 			Port: viper.GetString("SERVER_PORT"),
 		},
 		Database: DatabaseConfig{
-			URL: viper.GetString("DATABASE_URL"),
+			Host:            viper.GetString("DB_HOST"),
+			Port:            viper.GetInt("DB_PORT"),
+			User:            viper.GetString("DB_USER"),
+			Password:        viper.GetString("DB_PASSWORD"),
+			DBName:          viper.GetString("DB_NAME"),
+			SSLMode:         viper.GetString("DB_SSL_MODE"),
+			MaxOpenConns:    viper.GetInt("DB_MAX_OPEN_CONNS"),
+			MaxIdleConns:    viper.GetInt("DB_MAX_IDLE_CONNS"),
+			ConnMaxLifetime: time.Duration(viper.GetInt("DB_CONN_MAX_LIFETIME_MINUTES")) * time.Minute,
 		},
 		JWT: JWTConfig{
 			Secret:          viper.GetString("JWT_SECRET"),
@@ -76,8 +97,8 @@ func Load() (*Config, error) {
 	}
 
 	// Validate required fields
-	if config.Database.URL == "" {
-		return nil, fmt.Errorf("DATABASE_URL is required")
+	if config.Database.Host == "" || config.Database.User == "" || config.Database.DBName == "" {
+		return nil, fmt.Errorf("DB_HOST, DB_USER, and DB_NAME are required")
 	}
 	if config.JWT.Secret == "" {
 		return nil, fmt.Errorf("JWT_SECRET is required")

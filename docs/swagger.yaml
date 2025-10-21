@@ -1,10 +1,97 @@
 basePath: /api/v1
 definitions:
+  dto.CreateDamagedRoadRequest:
+    properties:
+      description:
+        example: Jalan berlubang sepanjang 50 meter
+        maxLength: 500
+        type: string
+      path_points:
+        items:
+          $ref: '#/definitions/dto.PointDTO'
+        maxItems: 100
+        minItems: 1
+        type: array
+      photo_urls:
+        items:
+          type: string
+        maxItems: 10
+        minItems: 1
+        type: array
+      subdistrict_code:
+        example: 35.10.02.2005
+        type: string
+      title:
+        example: Jalan berlubang di depan SDN 01
+        maxLength: 100
+        minLength: 3
+        type: string
+    required:
+    - path_points
+    - photo_urls
+    - subdistrict_code
+    - title
+    type: object
+  dto.DamagedRoadListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.DamagedRoadResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+    type: object
+  dto.DamagedRoadResponse:
+    properties:
+      author_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      created_at:
+        example: "2025-10-20T10:00:00Z"
+        type: string
+      description:
+        example: Jalan berlubang sepanjang 50 meter
+        type: string
+      id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      path:
+        $ref: '#/definitions/dto.GeometryDTO'
+      photo_urls:
+        items:
+          type: string
+        type: array
+      status:
+        example: submitted
+        type: string
+      subdistrict_code:
+        example: 35.10.02.2005
+        type: string
+      title:
+        example: Jalan berlubang di depan SDN 01
+        type: string
+      updated_at:
+        example: "2025-10-20T10:00:00Z"
+        type: string
+    type: object
   dto.ErrorResponse:
     properties:
       error:
         type: string
       message:
+        type: string
+    type: object
+  dto.GeometryDTO:
+    properties:
+      coordinates:
+        items:
+          items:
+            format: float64
+            type: number
+          type: array
+        type: array
+      type:
+        example: LineString
         type: string
     type: object
   dto.LoginRequest:
@@ -35,6 +122,21 @@ definitions:
     properties:
       refresh_token:
         type: string
+    type: object
+  dto.PaginationMeta:
+    properties:
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      page:
+        example: 1
+        type: integer
+      total:
+        example: 100
+        type: integer
     type: object
   dto.PasswordChangeRequest:
     properties:
@@ -80,6 +182,40 @@ definitions:
       message:
         type: string
     type: object
+  dto.PhotoValidationResult:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      error:
+        example: ""
+        type: string
+      size_bytes:
+        example: 524288
+        type: integer
+      url:
+        example: https://example.com/photo1.jpg
+        type: string
+      valid:
+        example: true
+        type: boolean
+    type: object
+  dto.PointDTO:
+    properties:
+      lat:
+        example: -7.2575
+        maximum: 6
+        minimum: -11
+        type: number
+      lng:
+        example: 112.7521
+        maximum: 141
+        minimum: 95
+        type: number
+    required:
+    - lat
+    - lng
+    type: object
   dto.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -124,6 +260,14 @@ definitions:
       role:
         type: string
     type: object
+  dto.UpdateStatusRequest:
+    properties:
+      status:
+        example: under_verification
+        type: string
+    required:
+    - status
+    type: object
   dto.UserInfo:
     properties:
       created_at:
@@ -139,12 +283,155 @@ definitions:
       role:
         type: string
     type: object
+  dto.ValidateLocationRequest:
+    properties:
+      path_points:
+        items:
+          $ref: '#/definitions/dto.PointDTO'
+        maxItems: 50
+        minItems: 1
+        type: array
+      subdistrict_code:
+        example: 35.10.02.2005
+        type: string
+    required:
+    - path_points
+    - subdistrict_code
+    type: object
+  dto.ValidateLocationResponse:
+    properties:
+      centroid_lat:
+        example: -7.257472
+        type: number
+      centroid_lng:
+        example: 112.75209
+        type: number
+      message:
+        example: Coordinates are valid
+        type: string
+      min_distance_to_center_meters:
+        example: 45.3
+        type: number
+      near_centroid:
+        example: true
+        type: boolean
+      subdistrict_exists:
+        example: true
+        type: boolean
+      valid:
+        example: true
+        type: boolean
+      within_boundaries:
+        example: true
+        type: boolean
+    type: object
+  dto.ValidatePhotosRequest:
+    properties:
+      photo_urls:
+        example:
+        - https://example.com/photo1.jpg
+        items:
+          type: string
+        maxItems: 10
+        minItems: 1
+        type: array
+    required:
+    - photo_urls
+    type: object
+  dto.ValidatePhotosResponse:
+    properties:
+      all_valid:
+        example: true
+        type: boolean
+      results:
+        items:
+          $ref: '#/definitions/dto.PhotoValidationResult'
+        type: array
+    type: object
+  handlers.HealthResponse:
+    properties:
+      checks:
+        additionalProperties:
+          type: string
+        type: object
+      status:
+        example: healthy
+        type: string
+      timestamp:
+        example: "2025-10-20T03:55:00Z"
+        type: string
+      uptime:
+        example: 1h23m45s
+        type: string
+    type: object
 info:
   contact: {}
   description: API documentation for the Jalanrusak backend service.
   title: Jalanrusak API
   version: "1.0"
 paths:
+  /api/v1/validate-location:
+    post:
+      consumes:
+      - application/json
+      description: Pre-submission validation to check if coordinates fall within Indonesian
+        boundaries and near the specified subdistrict centroid
+      parameters:
+      - description: Location validation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ValidateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validation result
+          schema:
+            $ref: '#/definitions/dto.ValidateLocationResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Validate location coordinates
+      tags:
+      - validation
+  /api/v1/validate-photos:
+    post:
+      consumes:
+      - application/json
+      description: Pre-submission validation to check if photo URLs are accessible,
+        have valid image content types, and pass SSRF protection checks
+      parameters:
+      - description: Photo validation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ValidatePhotosRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validation results
+          schema:
+            $ref: '#/definitions/dto.ValidatePhotosResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Validate photo URLs
+      tags:
+      - validation
   /auth/login:
     post:
       consumes:
@@ -384,6 +671,186 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /damaged-roads:
+    get:
+      description: Get paginated list of damaged road reports with optional filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        maximum: 100
+        name: limit
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by subdistrict code
+        in: query
+        name: subdistrict_code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of reports
+          schema:
+            $ref: '#/definitions/dto.DamagedRoadListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List damaged road reports
+      tags:
+      - Damaged Roads
+    post:
+      consumes:
+      - application/json
+      description: Logged-in users can submit a new damaged road report with title,
+        location coordinates, photos, and optional description
+      parameters:
+      - description: Create damaged road request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateDamagedRoadRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Report created successfully
+          schema:
+            $ref: '#/definitions/dto.DamagedRoadResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized - authentication required
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new damaged road report
+      tags:
+      - Damaged Roads
+  /damaged-roads/{id}:
+    get:
+      description: Retrieve detailed information about a specific damaged road report
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Report details
+          schema:
+            $ref: '#/definitions/dto.DamagedRoadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a specific damaged road report
+      tags:
+      - Damaged Roads
+  /damaged-roads/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a damaged road report (for administrators/verificators)
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update status request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status updated successfully
+          schema:
+            $ref: '#/definitions/dto.DamagedRoadResponse'
+        "400":
+          description: Invalid status transition
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update report status
+      tags:
+      - Damaged Roads
+  /health:
+    get:
+      description: Returns the health status of the application and its dependencies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/handlers.HealthResponse'
+        "503":
+          description: Service is unhealthy
+          schema:
+            $ref: '#/definitions/handlers.HealthResponse'
+      summary: Health check
+      tags:
+      - health
 schemes:
 - http
 securityDefinitions:

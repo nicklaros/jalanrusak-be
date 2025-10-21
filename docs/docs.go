@@ -15,6 +15,102 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/validate-location": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Pre-submission validation to check if coordinates fall within Indonesian boundaries and near the specified subdistrict centroid",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "validation"
+                ],
+                "summary": "Validate location coordinates",
+                "parameters": [
+                    {
+                        "description": "Location validation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ValidateLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation result",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ValidateLocationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/validate-photos": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Pre-submission validation to check if photo URLs are accessible, have valid image content types, and pass SSRF protection checks",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "validation"
+                ],
+                "summary": "Validate photo URLs",
+                "parameters": [
+                    {
+                        "description": "Photo validation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ValidatePhotosRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation results",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ValidatePhotosResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Login with email and password to receive access and refresh tokens.",
@@ -384,9 +480,388 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/damaged-roads": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get paginated list of damaged road reports with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Damaged Roads"
+                ],
+                "summary": "List damaged road reports",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by subdistrict code",
+                        "name": "subdistrict_code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of reports",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DamagedRoadListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Logged-in users can submit a new damaged road report with title, location coordinates, photos, and optional description",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Damaged Roads"
+                ],
+                "summary": "Create a new damaged road report",
+                "parameters": [
+                    {
+                        "description": "Create damaged road request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateDamagedRoadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Report created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DamagedRoadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/damaged-roads/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve detailed information about a specific damaged road report",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Damaged Roads"
+                ],
+                "summary": "Get a specific damaged road report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report details",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DamagedRoadResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/damaged-roads/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the status of a damaged road report (for administrators/verificators)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Damaged Roads"
+                ],
+                "summary": "Update report status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update status request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DamagedRoadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid status transition",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Returns the health status of the application and its dependencies",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service is unhealthy",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HealthResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dto.CreateDamagedRoadRequest": {
+            "type": "object",
+            "required": [
+                "path_points",
+                "photo_urls",
+                "subdistrict_code",
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Jalan berlubang sepanjang 50 meter"
+                },
+                "path_points": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/dto.PointDTO"
+                    }
+                },
+                "photo_urls": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "subdistrict_code": {
+                    "type": "string",
+                    "example": "35.10.02.2005"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3,
+                    "example": "Jalan berlubang di depan SDN 01"
+                }
+            }
+        },
+        "dto.DamagedRoadListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.DamagedRoadResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationMeta"
+                }
+            }
+        },
+        "dto.DamagedRoadResponse": {
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-10-20T10:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Jalan berlubang sepanjang 50 meter"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "path": {
+                    "$ref": "#/definitions/dto.GeometryDTO"
+                },
+                "photo_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "example": "submitted"
+                },
+                "subdistrict_code": {
+                    "type": "string",
+                    "example": "35.10.02.2005"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Jalan berlubang di depan SDN 01"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-10-20T10:00:00Z"
+                }
+            }
+        },
         "dto.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -395,6 +870,25 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.GeometryDTO": {
+            "type": "object",
+            "properties": {
+                "coordinates": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "number",
+                            "format": "float64"
+                        }
+                    }
+                },
+                "type": {
+                    "type": "string",
+                    "example": "LineString"
                 }
             }
         },
@@ -439,6 +933,27 @@ const docTemplate = `{
             "properties": {
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PaginationMeta": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },
@@ -509,6 +1024,52 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PhotoValidationResult": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "error": {
+                    "type": "string",
+                    "example": ""
+                },
+                "size_bytes": {
+                    "type": "integer",
+                    "example": 524288
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/photo1.jpg"
+                },
+                "valid": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "dto.PointDTO": {
+            "type": "object",
+            "required": [
+                "lat",
+                "lng"
+            ],
+            "properties": {
+                "lat": {
+                    "type": "number",
+                    "maximum": 6,
+                    "minimum": -11,
+                    "example": -7.2575
+                },
+                "lng": {
+                    "type": "number",
+                    "maximum": 141,
+                    "minimum": 95,
+                    "example": 112.7521
+                }
+            }
+        },
         "dto.RefreshTokenRequest": {
             "type": "object",
             "required": [
@@ -575,6 +1136,18 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.UpdateStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "under_verification"
+                }
+            }
+        },
         "dto.UserInfo": {
             "type": "object",
             "properties": {
@@ -595,6 +1168,121 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.ValidateLocationRequest": {
+            "type": "object",
+            "required": [
+                "path_points",
+                "subdistrict_code"
+            ],
+            "properties": {
+                "path_points": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/dto.PointDTO"
+                    }
+                },
+                "subdistrict_code": {
+                    "type": "string",
+                    "example": "35.10.02.2005"
+                }
+            }
+        },
+        "dto.ValidateLocationResponse": {
+            "type": "object",
+            "properties": {
+                "centroid_lat": {
+                    "type": "number",
+                    "example": -7.257472
+                },
+                "centroid_lng": {
+                    "type": "number",
+                    "example": 112.75209
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Coordinates are valid"
+                },
+                "min_distance_to_center_meters": {
+                    "type": "number",
+                    "example": 45.3
+                },
+                "near_centroid": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "subdistrict_exists": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "valid": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "within_boundaries": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "dto.ValidatePhotosRequest": {
+            "type": "object",
+            "required": [
+                "photo_urls"
+            ],
+            "properties": {
+                "photo_urls": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "https://example.com/photo1.jpg"
+                    ]
+                }
+            }
+        },
+        "dto.ValidatePhotosResponse": {
+            "type": "object",
+            "properties": {
+                "all_valid": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PhotoValidationResult"
+                    }
+                }
+            }
+        },
+        "handlers.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "checks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "example": "healthy"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-10-20T03:55:00Z"
+                },
+                "uptime": {
+                    "type": "string",
+                    "example": "1h23m45s"
                 }
             }
         }

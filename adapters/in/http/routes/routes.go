@@ -15,9 +15,15 @@ func SetupRoutes(
 	registrationHandler *handlers.RegistrationHandler,
 	authHandler *handlers.AuthHandler,
 	passwordHandler *handlers.PasswordHandler,
+	reportHandler *handlers.ReportHandler,
+	validationHandler *handlers.ValidationHandler,
+	healthHandler *handlers.HealthHandler,
 	authService usecases.AuthService,
 ) {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Health check (public, no rate limit)
+	router.GET("/health", healthHandler.HealthCheck)
 
 	// API v1 routes
 	apiV1 := router.Group("/api/v1")
@@ -40,7 +46,16 @@ func SetupRoutes(
 		{
 			protected.POST("/auth/logout", authHandler.Logout)
 			protected.POST("/auth/password/change", passwordHandler.ChangePassword)
-			// Add more protected routes here
+
+			// Validation endpoints
+			protected.POST("/validate-location", validationHandler.ValidateLocation)
+			protected.POST("/validate-photos", validationHandler.ValidatePhotos)
+
+			// Damaged road report routes
+			protected.POST("/damaged-roads", reportHandler.CreateReport)
+			protected.GET("/damaged-roads", reportHandler.ListReports)
+			protected.GET("/damaged-roads/:id", reportHandler.GetReport)
+			protected.PATCH("/damaged-roads/:id/status", reportHandler.UpdateReportStatus)
 		}
 	}
 }

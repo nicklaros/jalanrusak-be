@@ -1,21 +1,24 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/nicklaros/jalanrusak-be/adapters/in/http/handlers"
+	"github.com/nicklaros/jalanrusak-be/adapters/in/http/middleware"
 	"github.com/nicklaros/jalanrusak-be/adapters/in/http/routes"
 	"github.com/nicklaros/jalanrusak-be/adapters/out/messaging"
 	"github.com/nicklaros/jalanrusak-be/adapters/out/repository/postgres"
 	"github.com/nicklaros/jalanrusak-be/adapters/out/security"
+	outServices "github.com/nicklaros/jalanrusak-be/adapters/out/services"
 	"github.com/nicklaros/jalanrusak-be/config"
 	"github.com/nicklaros/jalanrusak-be/core/ports/external"
 	"github.com/nicklaros/jalanrusak-be/core/services"
 	docs "github.com/nicklaros/jalanrusak-be/docs"
+	"github.com/ulule/limiter/v3"
 )
 
 // @title Jalanrusak API
@@ -34,24 +37,32 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Initialize database connection
-	db, err := sql.Open("postgres", cfg.Database.URL)
+	// Initialize database connection with PostGIS support
+	dbConfig := postgres.ConnectionConfig{
+		Host:            cfg.Database.Host,
+		Port:            cfg.Database.Port,
+		User:            cfg.Database.User,
+		Password:        cfg.Database.Password,
+		DBName:          cfg.Database.DBName,
+		SSLMode:         cfg.Database.SSLMode,
+		MaxOpenConns:    cfg.Database.MaxOpenConns,
+		MaxIdleConns:    cfg.Database.MaxIdleConns,
+		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
+	}
+
+	db, err := postgres.NewConnection(dbConfig)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
-
-	// Test database connection
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-	}
-	log.Println("✓ Connected to database")
+	defer postgres.Close(db)
+	log.Println("✓ Connected to database with PostGIS support")
 
 	// Initialize repositories (driven adapters)
-	userRepo := postgres.NewUserRepository(db)
-	refreshTokenRepo := postgres.NewRefreshTokenRepository(db)
-	passwordResetTokenRepo := postgres.NewPasswordResetTokenRepository(db)
-	authEventLogRepo := postgres.NewAuthEventLogRepository(db)
+	userRepo := postgres.NewUserRepository(db.DB)
+	refreshTokenRepo := postgres.NewRefreshTokenRepository(db.DB)
+	passwordResetTokenRepo := postgres.NewPasswordResetTokenRepository(db.DB)
+	authEventLogRepo := postgres.NewAuthEventLogRepository(db.DB)
+	damagedRoadRepo := postgres.NewDamagedRoadRepository(db)
 
 	// Initialize security adapters
 	passwordHasher := security.NewBcryptHasher(12) // cost 12 for production
@@ -86,20 +97,47 @@ func main() {
 		authEventLogRepo,
 	)
 
+	// Initialize boundary repository and geometry service
+	boundaryRepo := postgres.NewBoundaryRepository(db)
+	geometryService := services.NewGeometryService(boundaryRepo)
+
+	// Initialize photo validator with SSRF protection
+	photoValidator := outServices.NewPhotoValidator()
+
+	// Initialize report service with geometry and photo validation
+	reportService := services.NewReportService(damagedRoadRepo, geometryService, photoValidator)
+
 	// Initialize handlers (driving adapters)
 	registrationHandler := handlers.NewRegistrationHandler(userService)
 	authHandler := handlers.NewAuthHandler(authService, userService, int(cfg.JWT.AccessTokenTTL.Hours()))
 	passwordHandler := handlers.NewPasswordHandler(passwordService)
+	reportHandler := handlers.NewReportHandler(reportService)
+	validationHandler := handlers.NewValidationHandler(geometryService, photoValidator)
+	healthHandler := handlers.NewHealthHandler(db)
 
-	// Setup Gin router
-	router := gin.Default()
+	// Setup Gin router without default middleware
+	router := gin.New()
+
+	// Add custom middleware
+	router.Use(gin.Recovery())                        // Panic recovery
+	router.Use(middleware.RequestIDMiddleware())      // Request ID tracking
+	router.Use(middleware.RequestLoggingMiddleware()) // Structured logging
+
+	// Configure CORS
+	router.Use(middleware.CORSMiddleware())
+
+	// Apply rate limiting to API routes
+	router.Use(middleware.RateLimitMiddleware(limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  100, // 100 requests per minute per IP
+	}))
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	docs.SwaggerInfo.Host = fmt.Sprintf("localhost:%s", cfg.Server.Port)
 	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	// Configure routes
-	routes.SetupRoutes(router, registrationHandler, authHandler, passwordHandler, authService)
+	routes.SetupRoutes(router, registrationHandler, authHandler, passwordHandler, reportHandler, validationHandler, healthHandler, authService)
 
 	// Start server
 	addr := fmt.Sprintf(":%s", cfg.Server.Port)

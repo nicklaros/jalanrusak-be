@@ -81,3 +81,44 @@ type AuthEventLogRepository interface {
 	// FindFailedLoginAttempts retrieves recent failed login attempts by IP or email
 	FindFailedLoginAttempts(ctx context.Context, ipAddress string, limit int) ([]*entities.AuthEventLog, error)
 }
+
+// DamagedRoadRepository defines the interface for damaged road report persistence
+type DamagedRoadRepository interface {
+	// Create creates a new damaged road report
+	Create(ctx context.Context, road *entities.DamagedRoad) error
+
+	// FindByID retrieves a damaged road report by ID
+	FindByID(ctx context.Context, id uuid.UUID) (*entities.DamagedRoad, error)
+
+	// FindByAuthor retrieves damaged road reports by author with pagination
+	FindByAuthor(ctx context.Context, authorID uuid.UUID, limit, offset int) ([]*entities.DamagedRoad, int, error)
+
+	// List retrieves damaged road reports with filters and pagination
+	List(ctx context.Context, filters *entities.DamagedRoadFilters) ([]*entities.DamagedRoad, int, error)
+
+	// UpdateStatus updates the status of a damaged road report
+	UpdateStatus(ctx context.Context, id uuid.UUID, status entities.Status) error
+
+	// Update updates an existing damaged road report
+	Update(ctx context.Context, road *entities.DamagedRoad) error
+
+	// Delete deletes a damaged road report by ID
+	Delete(ctx context.Context, id uuid.UUID) error
+
+	// FindByGeometry finds damaged road reports within a geographic boundary
+	FindByGeometry(ctx context.Context, bounds entities.Geometry) ([]*entities.DamagedRoad, error)
+}
+
+// BoundaryRepository defines the interface for administrative boundary and centroid data.
+// Used for validating that reported coordinates align with the selected subdistrict.
+type BoundaryRepository interface {
+	// GetCentroid retrieves the geographic centroid for a given subdistrict code.
+	// Returns error if subdistrict code is not found in the boundary dataset.
+	GetCentroid(subDistrictCode entities.SubDistrictCode) (entities.Point, error)
+
+	// CheckSubDistrictExists verifies if a subdistrict code exists in the official dataset.
+	CheckSubDistrictExists(subDistrictCode entities.SubDistrictCode) (bool, error)
+
+	// StoreCentroid stores centroid data for a subdistrict (for data seeding/updates).
+	StoreCentroid(subDistrictCode entities.SubDistrictCode, centroid entities.Point) error
+}

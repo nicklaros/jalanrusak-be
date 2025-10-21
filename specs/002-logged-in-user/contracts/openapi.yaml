@@ -1,0 +1,724 @@
+openapi: 3.0.3
+info:
+  title: JalanRusak API - Damaged Road Reporting
+  description: API for logged-in users to report damaged roads in Indonesia using PostGIS for path storage
+  version: 1.0.0
+  contact:
+    name: JalanRusak Development Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.jalanrusak.id/api/v1
+    description: Production server
+
+paths:
+  /damaged-roads:
+    post:
+      summary: Create a new damaged road report
+      description: Logged-in users can submit a new damaged road report with title, location (as coordinate points), photos, and optional description
+      tags:
+        - Damaged Roads
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDamagedRoadRequest'
+      responses:
+        '201':
+          description: Damaged road report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamagedRoadResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List damaged road reports
+      description: Get paginated list of damaged road reports with optional filters
+      tags:
+        - Damaged Roads
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/Status'
+          description: Filter by report status
+        - name: subdistrict_code
+          in: query
+          schema:
+            type: string
+            pattern: '^\d{2}\.\d{2}\.\d{2}\.\d{4}$'
+          description: Filter by subdistrict administrative code
+      responses:
+        '200':
+          description: List of damaged road reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamagedRoadListResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /damaged-roads/{id}:
+    get:
+      summary: Get a specific damaged road report
+      description: Retrieve detailed information about a specific damaged road report
+      tags:
+        - Damaged Roads
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Report ID
+      responses:
+        '200':
+          description: Damaged road report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamagedRoadResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /damaged-roads/{id}/status:
+    patch:
+      summary: Update report status
+      description: Update the status of a damaged road report (for administrators/verificators)
+      tags:
+        - Damaged Roads
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Report ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Report status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamagedRoadResponse'
+        '400':
+          description: Bad request - invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /validation/photo-urls:
+    post:
+      summary: Validate photo URLs
+      description: Validate accessibility and content type of photo URLs before creating a report
+      tags:
+        - Validation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidatePhotoURLsRequest'
+      responses:
+        '200':
+          description: Photo URLs validation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoValidationResponse'
+        '400':
+          description: Bad request - invalid URLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /validation/subdistrict-codes/{code}:
+    get:
+      summary: Validate SubDistrict administrative code
+      description: Check if a SubDistrict administrative code exists and is valid (application layer validation)
+      tags:
+        - Validation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{2}\.\d{2}\.\d{2}\.\d{4}$'
+          description: SubDistrict administrative code (NN.NN.NN.NNNN)
+      responses:
+        '200':
+          description: Administrative code validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubDistrictValidationResponse'
+        '400':
+          description: Bad request - invalid code format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Administrative code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /validation/coordinates:
+    post:
+      summary: Validate coordinates
+      description: Check if coordinates are within Indonesian boundaries (application layer validation)
+      tags:
+        - Validation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCoordinatesRequest'
+      responses:
+        '200':
+          description: Coordinates validation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoordinatesValidationResponse'
+        '400':
+          description: Bad request - invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateDamagedRoadRequest:
+      type: object
+      required:
+        - title
+        - subdistrict_code
+        - path_points
+        - photo_urls
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Title describing the road damage
+          example: "Jalan berlubang di depan SDN 01"
+        subdistrict_code:
+          type: string
+          pattern: '^\d{2}\.\d{2}\.\d{2}\.\d{4}$'
+          description: Indonesian subdistrict administrative code (Province.District.Subdistrict.Village)
+          example: "35.10.02.2005"
+        path_points:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Point'
+          description: Array of coordinate points describing the damaged path (will be stored as PostGIS LINESTRING)
+        photo_urls:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            format: uri
+          description: Array of photo URLs (1-10 photos required)
+        description:
+          type: string
+          maxLength: 500
+          description: Optional detailed description of the damage
+          example: "Jalan berlubang sepanjang 50 meter, berbahaya bagi pengendara motor"
+
+    Point:
+      type: object
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+          minimum: -11
+          maximum: 6
+          description: Latitude coordinate (Indonesian boundaries)
+          example: -7.2575
+        lng:
+          type: number
+          minimum: 95
+          maximum: 141
+          description: Longitude coordinate (Indonesian boundaries)
+          example: 112.7521
+
+    Geometry:
+      type: object
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum: [LineString]
+          description: Geometry type
+        coordinates:
+          type: array
+          minItems: 2
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+          description: Array of [longitude, latitude] pairs forming the path
+          example: [[112.7521, -7.2575], [112.7525, -7.2578]]
+      description: PostGIS LineString geometry representing the damaged road path
+
+    DamagedRoadResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the report
+        title:
+          type: string
+          description: Report title
+        subdistrict_code:
+          type: string
+          description: SubDistrict administrative code
+        path:
+          $ref: '#/components/schemas/Geometry'
+          description: PostGIS LineString geometry of the damaged path
+        description:
+          type: string
+          nullable: true
+          description: Optional description
+        photo_urls:
+          type: array
+          items:
+            type: string
+          description: Photo URLs
+        author_id:
+          type: string
+          format: uuid
+          description: User ID who created the report
+        status:
+          $ref: '#/components/schemas/Status'
+        created_at:
+          type: string
+          format: date-time
+          description: Report creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    Status:
+      type: string
+      enum:
+        - submitted
+        - under_verification
+        - verified
+        - pending_resolved
+        - resolved
+        - archived
+      description: Current status of the damaged road report
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+          description: New status for the report
+
+    DamagedRoadListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamagedRoadResponse'
+          description: List of damaged road reports
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+        total_pages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+
+    ValidatePhotoURLsRequest:
+      type: object
+      required:
+        - urls
+      properties:
+        urls:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            format: uri
+          description: Array of photo URLs to validate (max 10)
+
+    PhotoValidationResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhotoValidationResult'
+          description: Validation results for each URL
+        summary:
+          $ref: '#/components/schemas/ValidationSummary'
+
+    PhotoValidationResult:
+      type: object
+      properties:
+        url:
+          type: string
+          description: The validated URL
+        content_type:
+          type: string
+          description: MIME content type of the resource
+        width:
+          type: integer
+          nullable: true
+          description: Image width in pixels (if available)
+        height:
+          type: integer
+          nullable: true
+          description: Image height in pixels (if available)
+        size:
+          type: integer
+          nullable: true
+          description: File size in bytes (if available)
+        accessible:
+          type: boolean
+          description: Whether the URL is accessible and valid
+        verified_at:
+          type: string
+          format: date-time
+          description: Validation timestamp
+        error:
+          type: string
+          nullable: true
+          description: Error message if validation failed
+
+    ValidationSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of URLs validated
+        valid:
+          type: integer
+          minimum: 0
+          description: Number of valid URLs
+        invalid:
+          type: integer
+          minimum: 0
+          description: Number of invalid URLs
+        all_valid:
+          type: boolean
+          description: Whether all URLs are valid
+
+    SubDistrictValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: Whether the administrative code is valid
+        admin_info:
+          $ref: '#/components/schemas/AdministrativeInfo'
+
+    AdministrativeInfo:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Administrative code
+        name:
+          type: string
+          description: Administrative area name
+        level:
+          type: integer
+          enum: [1, 2, 3, 4]
+          description: Administrative level (1=Province, 2=District, 3=Subdistrict, 4=Village)
+        parent_code:
+          type: string
+          nullable: true
+          description: Parent administrative code
+
+    ValidateCoordinatesRequest:
+      type: object
+      required:
+        - points
+      properties:
+        points:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Point'
+          description: Array of coordinate points to validate
+
+    CoordinatesValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: Whether all coordinates are valid
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoordinateValidationResult'
+          description: Validation results for each coordinate
+        summary:
+          $ref: '#/components/schemas/ValidationSummary'
+
+    CoordinateValidationResult:
+      type: object
+      properties:
+        point:
+          $ref: '#/components/schemas/Point'
+        within_indonesia:
+          type: boolean
+          description: Whether the coordinate is within Indonesian boundaries
+        nearest_administrative:
+          $ref: '#/components/schemas/AdministrativeInfo'
+          description: Nearest administrative area (if available)
+        distance_to_administrative:
+          type: number
+          nullable: true
+          description: Distance to nearest administrative center in meters
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Error message
+            field:
+              type: string
+              nullable: true
+              description: Field that caused the error (if applicable)
+            details:
+              type: object
+              nullable: true
+              description: Additional error details
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+tags:
+  - name: Damaged Roads
+    description: Operations for managing damaged road reports
+  - name: Validation
+    description: Validation services for user input
+
+examples:
+  CreateDamagedRoadRequest:
+    summary: Example request to create a damaged road report
+    value:
+      title: "Jalan berlubang parah di depan pasar"
+      subdistrict_code: "35.10.02.2005"
+      path_points:
+        - lat: -7.2575
+          lng: 112.7521
+        - lat: -7.2578
+          lng: 112.7525
+      photo_urls:
+        - "https://instagram.com/p/example1/"
+        - "https://instagram.com/p/example2/"
+      description: "Jalan berlubang sepanjang 30 meter, sangat berbahaya bagi pengendara motor terutama malam hari"

@@ -50,11 +50,11 @@ func (h *ReportHandler) CreateReport(c *gin.Context) {
 		return
 	}
 
-	authorID, ok := userID.(uuid.UUID)
-	if !ok {
+	authorID, err := uuid.Parse(userID.(string))
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
-			Message: "Invalid user ID format",
+			Message: "Invalid user ID format: " + err.Error(),
 		})
 		return
 	}

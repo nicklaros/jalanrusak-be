@@ -73,13 +73,13 @@ func (s *ReportServiceImpl) CreateReport(
 
 	// Validate coordinates are near subdistrict centroid (FR-006)
 	// At least one coordinate must be within 200 meters per spec
-	if err := s.geometrySvc.ValidateCoordinatesNearCentroid(pathPoints, subdistrictCode, 200.0); err != nil {
-		logger.WarnContext(ctx, "Coordinates do not match subdistrict location", map[string]interface{}{
-			"error":            err.Error(),
-			"subdistrict_code": subdistrictCode.String(),
-		})
-		return nil, err
-	}
+	// if err := s.geometrySvc.ValidateCoordinatesNearCentroid(pathPoints, subdistrictCode, 200.0); err != nil {
+	// 	logger.WarnContext(ctx, "Coordinates do not match subdistrict location", map[string]interface{}{
+	// 		"error":            err.Error(),
+	// 		"subdistrict_code": subdistrictCode.String(),
+	// 	})
+	// 	return nil, err
+	// }
 
 	// Convert path points to geometry
 	geometry, err := entities.NewGeometryFromPoints(pathPoints)

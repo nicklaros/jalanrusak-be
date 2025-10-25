@@ -94,21 +94,28 @@ func (r *DamagedRoadRepository) Create(ctx context.Context, road *entities.Damag
 		description = sql.NullString{String: road.Description.String(), Valid: true}
 	}
 
-	query := `
+	// Start a transaction
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.NewDatabaseError("begin transaction", err)
+	}
+	defer tx.Rollback()
+
+	// Insert the damaged road (without photo_urls column)
+	roadQuery := `
 		INSERT INTO damaged_roads (
-			id, title, subdistrict_code, path, description, photo_urls, author_id, status, created_at, updated_at
+			id, title, subdistrict_code, path, description, author_id, status, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, ST_GeomFromGeoJSON($4), $5, $6, $7, $8, $9, $10
+			$1, $2, $3, ST_GeomFromGeoJSON($4), $5, $6, $7, $8, $9
 		)
 	`
 
-	_, err = r.db.ExecContext(ctx, query,
+	_, err = tx.ExecContext(ctx, roadQuery,
 		road.ID,
 		road.Title.String(),
 		road.SubDistrictCode.String(),
 		string(geometryJSON),
 		description,
-		pq.Array(road.PhotoURLs),
 		road.AuthorID,
 		road.Status.String(),
 		road.CreatedAt,
@@ -117,6 +124,25 @@ func (r *DamagedRoadRepository) Create(ctx context.Context, road *entities.Damag
 
 	if err != nil {
 		return errors.NewDatabaseError("create damaged road", err)
+	}
+
+	// Insert photos into damaged_road_photos table
+	if len(road.PhotoURLs) > 0 {
+		photoQuery := `
+			INSERT INTO damaged_road_photos (road_id, url, validation_status)
+			VALUES ($1, $2, 'pending')
+		`
+		for _, photoURL := range road.PhotoURLs {
+			_, err = tx.ExecContext(ctx, photoQuery, road.ID, photoURL)
+			if err != nil {
+				return errors.NewDatabaseError("insert damaged road photo", err)
+			}
+		}
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return errors.NewDatabaseError("commit transaction", err)
 	}
 
 	return nil
@@ -300,19 +326,26 @@ func (r *DamagedRoadRepository) Update(ctx context.Context, road *entities.Damag
 		description = sql.NullString{String: road.Description.String(), Valid: true}
 	}
 
-	query := `
+	// Start a transaction
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.NewDatabaseError("begin transaction", err)
+	}
+	defer tx.Rollback()
+
+	// Update the damaged road (without photo_urls column)
+	roadQuery := `
 		UPDATE damaged_roads
 		SET title = $1, subdistrict_code = $2, path = ST_GeomFromGeoJSON($3), 
-		    description = $4, photo_urls = $5, status = $6, updated_at = $7
-		WHERE id = $8
+		    description = $4, status = $5, updated_at = $6
+		WHERE id = $7
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := tx.ExecContext(ctx, roadQuery,
 		road.Title.String(),
 		road.SubDistrictCode.String(),
 		string(geometryJSON),
 		description,
-		pq.Array(road.PhotoURLs),
 		road.Status.String(),
 		road.UpdatedAt,
 		road.ID,
@@ -329,6 +362,32 @@ func (r *DamagedRoadRepository) Update(ctx context.Context, road *entities.Damag
 
 	if rows == 0 {
 		return errors.ErrRecordNotFound
+	}
+
+	// Delete existing photos
+	deletePhotosQuery := `DELETE FROM damaged_road_photos WHERE road_id = $1`
+	_, err = tx.ExecContext(ctx, deletePhotosQuery, road.ID)
+	if err != nil {
+		return errors.NewDatabaseError("delete existing photos", err)
+	}
+
+	// Insert new photos
+	if len(road.PhotoURLs) > 0 {
+		photoQuery := `
+			INSERT INTO damaged_road_photos (road_id, url, validation_status)
+			VALUES ($1, $2, 'pending')
+		`
+		for _, photoURL := range road.PhotoURLs {
+			_, err = tx.ExecContext(ctx, photoQuery, road.ID, photoURL)
+			if err != nil {
+				return errors.NewDatabaseError("insert damaged road photo", err)
+			}
+		}
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return errors.NewDatabaseError("commit transaction", err)
 	}
 
 	return nil
